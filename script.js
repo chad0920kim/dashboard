@@ -10,6 +10,9 @@ let currentData = {
     emailSettings: {}
 };
 
+// API 기본 URL 설정
+const API_BASE_URL = 'https://feedback3.run.goorm.site';
+
 // =========================
 // 유틸리티 함수들
 // =========================
@@ -20,10 +23,14 @@ async function apiRequest(url, options = {}) {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
-        }
+        },
+        credentials: 'include' // 쿠키/세션 포함
     };
     
-    const response = await fetch(url, { ...defaultOptions, ...options });
+    // 절대 URL인지 확인하고, 상대 URL이면 BASE_URL 추가
+    const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+    
+    const response = await fetch(fullUrl, { ...defaultOptions, ...options });
     
     if (!response.ok) {
         const error = await response.json().catch(() => ({ message: 'Network error' }));
