@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>투어비스 AI 관리 대시보드</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 로그인 화면 -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1><i class="fas fa-robot"></i> 투어비스 AI 관리 대시보드</h1>
+                <p class="login-description">
+                    본 대시보드는 투어비스 고객센터의 FAQ AI답변 에이전트 관리를 위해 제작되었습니다.<br>
+                    • 📊 고객질문 분석 및 통계<br>
+                    • 🎯 지시사항 관리 및 최적화<br>
+                    관련한 문의 사항은 <strong>김영훈</strong> 앞으로 문의 바랍니다.
+                </p>
+            </div>
+            
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="password">비밀번호를 입력하세요</label>
+                    <input type="password" id="password" placeholder="패스워드 입력" />
+                    <small class="help-text">패스워드 문의: 김영훈</small>
+                </div>
+                
+                <button id="loginBtn" type="button" class="btn btn-primary">
+                    <i class="fas fa-key"></i> 로그인
+                </button>
+                
+                <div id="loginError" class="error-message" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 대시보드 -->
+    <div id="mainDashboard" class="main-dashboard" style="display: none;">
+        <!-- 헤더 -->
+        <header class="header">
+            <h1><i class="fas fa-robot"></i> 투어비스 AI 관리 대시보드</h1>
+            <div class="header-actions">
+                <span class="user-info">관리자</span>
+                <button id="logoutBtn" class="btn btn-secondary">
+                    <i class="fas fa-sign-out-alt"></i> 로그아웃
+                </button>
+            </div>
+        </header>
+
+        <!-- 메인 탭 -->
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab="dashboard">
+                    <i class="fas fa-chart-bar"></i> 📊 고객질문 대시보드
+                </button>
+                <button class="tab-button" data-tab="instructions">
+                    <i class="fas fa-bullseye"></i> 🎯 지시사항 관리
+                </button>
+            </div>
+
+            <!-- 고객질문 대시보드 탭 -->
+            <div id="dashboardTab" class="tab-content active">
+                <div class="dashboard-header">
+                    <h2>📊 고객질문 분석</h2>
+                    <p class="tab-description">
+                        본 대시보드는 투어비스 고객센터의 FAQ AI답변 에이전트 관리를 위해 제작되었습니다.<br>
+                        관련한 문의 사항은 <strong>김영훈</strong> 앞으로 문의 바랍니다.
+                    </p>
+                </div>
+
+                <!-- 검색 조건 -->
+                <div class="search-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>조회 방식</label>
+                            <select id="searchMode">
+                                <option value="day">하루 조회</option>
+                                <option value="range">날짜 범위 조회</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="singleDateGroup">
+                            <label>날짜 선택</label>
+                            <input type="date" id="singleDate" />
+                        </div>
+                        
+                        <div class="form-group" id="startDateGroup" style="display: none;">
+                            <label>시작 날짜</label>
+                            <input type="date" id="startDate" />
+                        </div>
+                        
+                        <div class="form-group" id="endDateGroup" style="display: none;">
+                            <label>종료 날짜</label>
+                            <input type="date" id="endDate" />
+                        </div>
+                    </div>
+
+                    <!-- 필터링 옵션 -->
+                    <div class="filter-section">
+                        <h4>🔍 필터링 옵션</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>매치상태 필터</label>
+                                <select id="matchFilter">
+                                    <option value="전체">전체</option>
+                                    <option value="매치⭕️">매치⭕️</option>
+                                    <option value="매치✖️">매치✖️</option>
+                                    <option value="보강➡️">보강➡️</option>
+                                    <option value="미검토만">미검토만</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>메일공유 상태 필터</label>
+                                <select id="emailFilter">
+                                    <option value="전체">전체</option>
+                                    <option value="발송완료">발송완료</option>
+                                    <option value="미발송">미발송</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>반영완료 필터</label>
+                                <select id="reflectionFilter">
+                                    <option value="전체">전체</option>
+                                    <option value="완료">완료</option>
+                                    <option value="미완료">미완료</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Chat/Session ID 필터</label>
+                                <input type="text" id="chatSessionFilter" placeholder="예: user_1a762d36793fdfdb" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="searchBtn" class="btn btn-primary">
+                        <i class="fas fa-search"></i> 🔍 조회
+                    </button>
+                </div>
+
+                <!-- 결과 영역 -->
+                <div id="resultsSection" style="display: none;">
+                    <!-- 통계 카드 -->
+                    <div class="statistics-section">
+                        <h3>📊 매치 상태별 통계</h3>
+                        <div class="stats-cards" id="statsCards">
+                            <!-- 동적으로 생성됨 -->
+                        </div>
+                        <div class="search-info" id="searchInfo"></div>
+                    </div>
+
+                    <!-- Q&A 상세보기 -->
+                    <div class="qa-detail-section">
+                        <h3>🔍 Q&A 상세보기</h3>
+                        <div class="qa-list-info" id="qaListInfo"></div>
+                        <div class="qa-list" id="qaList">
+                            <!-- 동적으로 생성됨 -->
+                        </div>
+                    </div>
+
+                    <!-- 키워드 분석 -->
+                    <div class="keyword-section">
+                        <h3>📊 키워드 분석</h3>
+                        <div class="keyword-table-container">
+                            <table id="keywordTable" class="keyword-table">
+                                <thead>
+                                    <tr>
+                                        <th>키워드</th>
+                                        <th>건수</th>
+                                        <th>사례</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- 동적으로 생성됨 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="keyword-actions">
+                            <button id="downloadExcel" class="btn btn-success">
+                                <i class="fas fa-download"></i> 📊 엑셀 다운로드
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="results-actions">
+                        <button id="newSearchBtn" class="btn btn-secondary">
+                            <i class="fas fa-redo"></i> 🔄 새로운 조회
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 메일 설정 안내 -->
+                <div class="email-settings-section">
+                    <details>
+                        <summary>📧 메일 공유 설정 안내</summary>
+                        <div id="emailSettingsContent">
+                            <!-- 동적으로 로드됨 -->
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- 지시사항 관리 탭 -->
+            <div id="instructionsTab" class="tab-content">
+                <div class="dashboard-header">
+                    <h2>🎯 지시사항 관리</h2>
+                    <p class="tab-description">
+                        AI 답변의 품질을 높이기 위한 추가 지시사항을 관리합니다.<br>
+                        키워드 기반 조건부 적용, 우선순위 설정, 활성화/비활성화가 가능합니다.
+                    </p>
+                </div>
+
+                <!-- 지시사항 관리 서브 탭 -->
+                <div class="sub-tab-container">
+                    <div class="sub-tab-buttons">
+                        <button class="sub-tab-button active" data-subtab="instructions-list">
+                            📋 지시사항 목록
+                        </button>
+                        <button class="sub-tab-button" data-subtab="instructions-add">
+                            ➕ 지시사항 추가
+                        </button>
+                        <button class="sub-tab-button" data-subtab="instructions-stats">
+                            📊 통계 및 분석
+                        </button>
+                        <button class="sub-tab-button" data-subtab="instructions-test">
+                            🧪 테스트
+                        </button>
+                    </div>
+
+                    <!-- 지시사항 목록 서브탭 -->
+                    <div id="instructionsListTab" class="sub-tab-content active">
+                        <h3>📋 현재 설정된 지시사항</h3>
+                        <div id="instructionsOverview">
+                            <!-- 동적으로 생성됨 -->
+                        </div>
+                        <div id="instructionsFilesList">
+                            <!-- 동적으로 생성됨 -->
+                        </div>
+                    </div>
+
+                    <!-- 지시사항 추가 서브탭 -->
+                    <div id="instructionsAddTab" class="sub-tab-content">
+                        <h3>➕ 새로운 지시사항 추가</h3>
+                        <form id="addInstructionForm" class="instruction-form">
+                            <div class="form-section">
+                                <h4>📝 기본 정보</h4>
+                                <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <label for="instructionTitle">제목 *</label>
+                                        <input type="text" id="instructionTitle" placeholder="예: 항공권 취소 관련 안내 강화" required />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="instructionPriority">우선순위 *</label>
+                                        <input type="number" id="instructionPriority" min="1" max="999" value="100" required />
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="instructionContent">지시사항 내용 *</label>
+                                    <textarea id="instructionContent" rows="6" placeholder="AI가 답변할 때 따라야 할 구체적인 지시사항을 입력하세요..." required></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h4>🔍 적용 조건</h4>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="applyToAll" />
+                                        모든 질문에 적용
+                                    </label>
+                                    <small class="help-text">체크하면 키워드에 관계없이 모든 질문에 이 지시사항이 적용됩니다.</small>
+                                </div>
+                                
+                                <div class="form-group" id="keywordsGroup">
+                                    <label for="instructionKeywords">키워드 (쉼표로 구분)</label>
+                                    <input type="text" id="instructionKeywords" placeholder="예: 취소, 환불, 변경, 수수료" />
+                                    <small class="help-text">이 키워드들 중 하나라도 포함된 질문에 지시사항이 적용됩니다.</small>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h4>💾 저장 설정</h4>
+                                <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <label for="fileChoice">저장할 파일</label>
+                                        <select id="fileChoice">
+                                            <option value="new">새 파일 생성</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="instructionActive" checked />
+                                            활성화
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group" id="newFilenameGroup">
+                                    <label for="newFilename">새 파일명</label>
+                                    <input type="text" id="newFilename" placeholder="예: customer_service_instructions.json" />
+                                    <small class="help-text">파일명은 .json 확장자를 포함해야 합니다.</small>
+                                </div>
+                            </div>
+
+                            <!-- 미리보기 -->
+                            <div class="form-section" id="previewSection" style="display: none;">
+                                <h4>👀 미리보기</h4>
+                                <div id="instructionPreview" class="instruction-preview">
+                                    <!-- 동적으로 생성됨 -->
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> ✅ 지시사항 저장
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- 통계 및 분석 서브탭 -->
+                    <div id="instructionsStatsTab" class="sub-tab-content">
+                        <h3>📊 지시사항 통계 및 분석</h3>
+                        <div id="instructionsStatistics">
+                            <!-- 동적으로 생성됨 -->
+                        </div>
+                    </div>
+
+                    <!-- 테스트 서브탭 -->
+                    <div id="instructionsTestTab" class="sub-tab-content">
+                        <h3>🧪 지시사항 테스트</h3>
+                        <p class="tab-description">
+                            특정 질문에 어떤 지시사항들이 적용되는지 테스트할 수 있습니다.<br>
+                            실제 AI 답변에는 적용되지 않으며, 단순히 조건 매칭만 확인합니다.
+                        </p>
+                        
+                        <div class="test-section">
+                            <div class="form-group">
+                                <label for="testQuestion">테스트할 질문을 입력하세요</label>
+                                <textarea id="testQuestion" rows="4" placeholder="예: 항공권 취소하고 싶습니다. 수수료가 얼마나 되나요?"></textarea>
+                            </div>
+                            
+                            <button id="testInstructionsBtn" class="btn btn-primary">
+                                <i class="fas fa-search"></i> 🔍 지시사항 매칭 테스트
+                            </button>
+                        </div>
+                        
+                        <div id="testResults" style="display: none;">
+                            <!-- 테스트 결과가 여기에 표시됨 -->
+                        </div>
+
+                        <div class="keyword-analysis-section">
+                            <h4>🔍 키워드 빈도 분석</h4>
+                            <button id="analyzeKeywords" class="btn btn-secondary">
+                                <i class="fas fa-chart-bar"></i> 📊 현재 설정된 키워드 분석
+                            </button>
+                            <div id="keywordAnalysisResults" style="display: none;">
+                                <!-- 키워드 분석 결과 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 모달들 -->
+    <!-- Q&A 상세 모달 -->
+    <div id="qaDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📊 Q&A 상세 정보</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="qaDetailContent">
+                <!-- 동적으로 생성됨 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 메일 발송 모달 -->
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📧 메일 공유</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="emailModalContent">
+                <!-- 동적으로 생성됨 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 발송 정보 모달 -->
+    <div id="sentInfoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📧 발송 완료 정보</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="sentInfoContent">
+                <!-- 동적으로 생성됨 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 지시사항 수정 모달 -->
+    <div id="editInstructionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📝 지시사항 수정</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="editInstructionContent">
+                <!-- 동적으로 생성됨 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 로딩 스피너 -->
+    <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-text">처리 중...</div>
+    </div>
+
+    <!-- 토스트 알림 -->
+    <div id="toast" class="toast" style="display: none;">
+        <div class="toast-content">
+            <i class="toast-icon"></i>
+            <span class="toast-message"></span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
