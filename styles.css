@@ -216,7 +216,7 @@ body {
 }
 
 /* ================================
-   탭 시스템
+   대시보드 컨테이너 (단순화)
 ================================ */
 
 .tab-container {
@@ -225,94 +225,11 @@ body {
     padding: 30px;
 }
 
-.tab-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 30px;
-    border-bottom: 2px solid #e0e0e0;
-}
-
-.tab-button {
-    background: transparent;
-    border: none;
-    padding: 15px 25px;
-    font-size: 16px;
-    font-weight: 600;
-    color: #666;
-    cursor: pointer;
-    border-radius: 8px 8px 0 0;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.tab-button:hover {
-    background-color: #f8f9fa;
-    color: #333;
-}
-
-.tab-button.active {
-    color: #667eea;
-    background-color: white;
-    border-bottom: 3px solid #667eea;
-}
-
-.tab-content {
-    display: none;
+.dashboard-content {
     background: white;
     border-radius: 15px;
     padding: 30px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-}
-
-.tab-content.active {
-    display: block;
-}
-
-/* 서브 탭 */
-.sub-tab-container {
-    margin-top: 20px;
-}
-
-.sub-tab-buttons {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 20px;
-    background-color: #f8f9fa;
-    padding: 5px;
-    border-radius: 10px;
-}
-
-.sub-tab-button {
-    background: transparent;
-    border: none;
-    padding: 12px 20px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #666;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    flex: 1;
-    text-align: center;
-}
-
-.sub-tab-button:hover {
-    background-color: #e9ecef;
-    color: #333;
-}
-
-.sub-tab-button.active {
-    background-color: white;
-    color: #667eea;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.sub-tab-content {
-    display: none;
-}
-
-.sub-tab-content.active {
-    display: block;
 }
 
 /* ================================
@@ -958,88 +875,11 @@ body {
 }
 
 /* ================================
-   지시사항 관리 스타일
-================================ */
-
-.instructions-summary {
-    margin-bottom: 30px;
-}
-
-.summary-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-}
-
-.summary-card {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 3px 15px rgba(0,0,0,0.08);
-    border-left: 4px solid #667eea;
-}
-
-.summary-card h4 {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 10px;
-}
-
-.summary-number {
-    font-size: 28px;
-    font-weight: 700;
-    color: #333;
-}
-
-.instruction-form {
-    max-width: 800px;
-}
-
-.form-section {
-    background: #f8f9fa;
-    padding: 25px;
-    border-radius: 12px;
-    margin-bottom: 25px;
-    border: 1px solid #e0e0e0;
-}
-
-.form-section h4 {
-    margin-bottom: 20px;
-    color: #333;
-    font-size: 18px;
-    border-bottom: 2px solid #ddd;
-    padding-bottom: 10px;
-}
-
-.form-actions {
-    text-align: center;
-    margin-top: 30px;
-}
-
-.instruction-preview {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    border: 2px solid #667eea;
-    margin-top: 15px;
-}
-
-.test-section {
-    background: #f8f9fa;
-    padding: 25px;
-    border-radius: 12px;
-    margin-bottom: 25px;
-}
-
-/* ================================
    에러 및 상태 메시지
 ================================ */
 
 .no-results,
 .error-results,
-.instructions-unavailable,
-.instructions-error,
 .email-settings-unavailable,
 .email-settings-error {
     text-align: center;
