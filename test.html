@@ -3,406 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API 연결 테스트</title>
+    <title>빠른 연결 테스트</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .test-container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .test-step {
-            margin: 20px 0;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            background: #f8f9fa;
-        }
-        .status {
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        button:hover { background: #0056b3; }
-        button:disabled { background: #6c757d; cursor: not-allowed; }
-        .log-area {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 15px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
-            height: 200px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .form-group {
-            margin: 15px 0;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .test { margin: 20px 0; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; }
+        input[type="password"] { padding: 8px; width: 200px; }
     </style>
 </head>
 <body>
-    <div class="test-container">
-        <h1>🔧 API 연결 테스트</h1>
-        <p>FastAPI 백엔드와 프런트엔드 간의 연결을 테스트합니다.</p>
-
-        <!-- 환경 정보 -->
-        <div class="test-step">
-            <h3>🌐 현재 환경 정보</h3>
-            <div id="envInfo"></div>
-        </div>
-
-        <!-- API 서버 설정 -->
-        <div class="test-step">
-            <h3>⚙️ API 서버 설정</h3>
-            <div class="form-group">
-                <label for="apiUrl">API 서버 URL:</label>
-                <input type="text" id="apiUrl" value="http://localhost:8502" placeholder="http://localhost:8502">
-            </div>
-            <button onclick="updateApiUrl()">URL 업데이트</button>
-        </div>
-
-        <!-- 연결 테스트들 -->
-        <div class="grid">
-            <div class="test-step">
-                <h4>1️⃣ 기본 서버 연결</h4>
-                <button onclick="testBasicConnection()">테스트 실행</button>
-                <div id="basicResult" class="status info">대기 중...</div>
-            </div>
-
-            <div class="test-step">
-                <h4>2️⃣ CORS 테스트</h4>
-                <button onclick="testCors()">테스트 실행</button>
-                <div id="corsResult" class="status info">대기 중...</div>
-            </div>
-
-            <div class="test-step">
-                <h4>3️⃣ 인증 상태 확인</h4>
-                <button onclick="testAuth()">테스트 실행</button>
-                <div id="authResult" class="status info">대기 중...</div>
-            </div>
-
-            <div class="test-step">
-                <h4>4️⃣ 로그인 테스트</h4>
-                <div class="form-group">
-                    <label for="testPassword">비밀번호:</label>
-                    <input type="password" id="testPassword" placeholder="비밀번호 입력">
-                </div>
-                <button onclick="testLogin()">로그인 테스트</button>
-                <div id="loginResult" class="status info">대기 중...</div>
-            </div>
-        </div>
-
-        <!-- 종합 테스트 -->
-        <div class="test-step">
-            <h3>🚀 종합 테스트</h3>
-            <button onclick="runAllTests()" id="runAllBtn">모든 테스트 실행</button>
-            <button onclick="clearLog()">로그 지우기</button>
-        </div>
-
-        <!-- 로그 영역 -->
-        <div class="test-step">
-            <h3>📋 실시간 로그</h3>
-            <div id="logArea" class="log-area"></div>
-        </div>
+    <h1>🚀 FastAPI 연결 테스트</h1>
+    
+    <div id="status" class="test info">
+        <h3>📡 서버 연결 상태</h3>
+        <button onclick="testConnection()">연결 테스트</button>
+        <div id="connectionResult"></div>
+    </div>
+    
+    <div class="test info">
+        <h3>🔐 로그인 테스트</h3>
+        <input type="password" id="password" placeholder="비밀번호" value="DefaultPassword">
+        <button onclick="testLogin()">로그인 테스트</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div class="test info">
+        <h3>📊 API 테스트</h3>
+        <button onclick="testAPI()">데이터 조회 테스트</button>
+        <div id="apiResult"></div>
     </div>
 
     <script>
-        let API_URL = 'http://localhost:8502';
-        
-        // 로그 함수
-        function log(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            const logArea = document.getElementById('logArea');
-            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
-            logArea.textContent += `[${timestamp}] ${prefix} ${message}\n`;
-            logArea.scrollTop = logArea.scrollHeight;
-            console.log(`${prefix} ${message}`);
-        }
+        const API_URL = 'http://localhost:8502';
 
-        function clearLog() {
-            document.getElementById('logArea').textContent = '';
-        }
-
-        function updateStatus(elementId, message, isSuccess = null) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.className = 'status ' + (
-                isSuccess === true ? 'success' : 
-                isSuccess === false ? 'error' : 
-                'warning'
-            );
-        }
-
-        function updateApiUrl() {
-            API_URL = document.getElementById('apiUrl').value;
-            log(`API URL 업데이트: ${API_URL}`);
-        }
-
-        // 환경 정보 표시
-        function showEnvironmentInfo() {
-            const envInfo = document.getElementById('envInfo');
-            envInfo.innerHTML = `
-                <p><strong>현재 페이지:</strong> ${window.location.href}</p>
-                <p><strong>호스트:</strong> ${window.location.hostname}</p>
-                <p><strong>프로토콜:</strong> ${window.location.protocol}</p>
-                <p><strong>포트:</strong> ${window.location.port || '기본'}</p>
-                <p><strong>User Agent:</strong> ${navigator.userAgent.substr(0, 100)}...</p>
-                <p><strong>쿠키 지원:</strong> ${navigator.cookieEnabled ? '✅ 지원' : '❌ 미지원'}</p>
-            `;
-        }
-
-        // 1. 기본 서버 연결 테스트
-        async function testBasicConnection() {
-            log('기본 서버 연결 테스트 시작...');
-            updateStatus('basicResult', '테스트 중...', null);
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'GET',
-                    mode: 'cors'
-                });
-                
-                const isSuccess = response.ok;
-                const message = `서버 응답: ${response.status} ${response.statusText}`;
-                
-                log(message, isSuccess ? 'success' : 'error');
-                updateStatus('basicResult', message, isSuccess);
-                
-                return isSuccess;
-            } catch (error) {
-                const message = `연결 실패: ${error.message}`;
-                log(message, 'error');
-                updateStatus('basicResult', message, false);
-                return false;
-            }
-        }
-
-        // 2. CORS 테스트
-        async function testCors() {
-            log('CORS 테스트 시작...');
-            updateStatus('corsResult', '테스트 중...', null);
+        async function testConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.innerHTML = '테스트 중...';
             
             try {
                 const response = await fetch(`${API_URL}/api/debug/session`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    credentials: 'include'
                 });
                 
                 if (response.ok) {
                     const data = await response.json();
-                    const message = 'CORS 작동 정상 ✅';
-                    log(message, 'success');
-                    log(`세션 데이터: ${JSON.stringify(data.session_data, null, 2)}`);
-                    updateStatus('corsResult', message, true);
-                    return true;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ 서버 연결 성공!<br>
+                            세션 데이터: ${JSON.stringify(data.session_data)}<br>
+                            쿠키: ${JSON.stringify(data.cookies)}
+                        </div>
+                    `;
                 } else {
-                    const message = `CORS 오류: ${response.status}`;
-                    log(message, 'error');
-                    updateStatus('corsResult', message, false);
-                    return false;
+                    resultDiv.innerHTML = `<div class="error">❌ 연결 실패: ${response.status}</div>`;
                 }
             } catch (error) {
-                const message = `CORS 실패: ${error.message}`;
-                log(message, 'error');
-                updateStatus('corsResult', message, false);
-                return false;
+                resultDiv.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
             }
         }
 
-        // 3. 인증 상태 확인
-        async function testAuth() {
-            log('인증 상태 확인 시작...');
-            updateStatus('authResult', '테스트 중...', null);
-            
-            try {
-                const response = await fetch(`${API_URL}/api/auth/check`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    const isAuthenticated = data.authenticated;
-                    const message = `인증 상태: ${isAuthenticated ? '로그인됨 ✅' : '로그인 안됨 ❌'}`;
-                    
-                    log(message, isAuthenticated ? 'success' : 'warning');
-                    log(`상세 정보: ${JSON.stringify(data, null, 2)}`);
-                    updateStatus('authResult', message, isAuthenticated);
-                    
-                    return isAuthenticated;
-                } else {
-                    const message = `인증 확인 실패: ${response.status}`;
-                    log(message, 'error');
-                    updateStatus('authResult', message, false);
-                    return false;
-                }
-            } catch (error) {
-                const message = `인증 확인 오류: ${error.message}`;
-                log(message, 'error');
-                updateStatus('authResult', message, false);
-                return false;
-            }
-        }
-
-        // 4. 로그인 테스트
         async function testLogin() {
-            const password = document.getElementById('testPassword').value;
-            if (!password) {
-                log('비밀번호를 입력해주세요.', 'warning');
-                updateStatus('loginResult', '비밀번호 필요', false);
-                return false;
-            }
-
-            log('로그인 테스트 시작...');
-            updateStatus('loginResult', '로그인 중...', null);
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '로그인 시도 중...';
             
             try {
                 const response = await fetch(`${API_URL}/api/auth/login`, {
                     method: 'POST',
                     credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password: password })
                 });
                 
                 const data = await response.json();
                 
                 if (response.ok && data.success) {
-                    const message = '로그인 성공 ✅';
-                    log(message, 'success');
-                    log(`응답: ${JSON.stringify(data, null, 2)}`);
-                    updateStatus('loginResult', message, true);
-                    
-                    // 로그인 성공 후 인증 상태 재확인
-                    setTimeout(testAuth, 1000);
-                    return true;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ 로그인 성공!<br>
+                            메시지: ${data.message}
+                        </div>
+                    `;
                 } else {
-                    const message = `로그인 실패: ${data.message || '알 수 없는 오류'}`;
-                    log(message, 'error');
-                    updateStatus('loginResult', message, false);
-                    return false;
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ 로그인 실패<br>
+                            ${data.detail || data.message}
+                        </div>
+                    `;
                 }
             } catch (error) {
-                const message = `로그인 오류: ${error.message}`;
-                log(message, 'error');
-                updateStatus('loginResult', message, false);
-                return false;
+                resultDiv.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
             }
         }
 
-        // 모든 테스트 실행
-        async function runAllTests() {
-            const button = document.getElementById('runAllBtn');
-            button.disabled = true;
-            button.textContent = '테스트 진행 중...';
+        async function testAPI() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.innerHTML = '데이터 조회 중...';
             
-            log('=== 종합 테스트 시작 ===');
-            
-            const results = {};
-            
-            log('1/4 기본 연결 테스트...');
-            results.basic = await testBasicConnection();
-            
-            if (results.basic) {
-                log('2/4 CORS 테스트...');
-                results.cors = await testCors();
+            try {
+                // 오늘 날짜로 통계 요청
+                const today = new Date().toISOString().split('T')[0];
+                const response = await fetch(`${API_URL}/api/dashboard/statistics`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mode: 'day',
+                        start_date: today,
+                        match_filter: '전체',
+                        email_filter: '전체',
+                        reflection_filter: '전체',
+                        chat_session_filter: ''
+                    })
+                });
                 
-                log('3/4 인증 상태 확인...');
-                results.auth = await testAuth();
-                
-                const password = document.getElementById('testPassword').value;
-                if (password && !results.auth) {
-                    log('4/4 로그인 테스트...');
-                    results.login = await testLogin();
-                } else if (results.auth) {
-                    log('4/4 이미 로그인됨, 로그인 테스트 생략');
-                    results.login = true;
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ API 호출 성공!<br>
+                            통계 데이터: ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
                 } else {
-                    log('4/4 비밀번호 미입력, 로그인 테스트 생략');
-                    results.login = null;
+                    const error = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ API 호출 실패: ${response.status}<br>
+                            ${JSON.stringify(error, null, 2)}
+                        </div>
+                    `;
                 }
-            } else {
-                log('기본 연결 실패로 인한 나머지 테스트 생략');
-                results.cors = false;
-                results.auth = false;
-                results.login = false;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
             }
-            
-            // 결과 요약
-            log('=== 테스트 결과 요약 ===');
-            log(`✅ 기본 연결: ${results.basic ? '성공' : '실패'}`);
-            log(`✅ CORS: ${results.cors ? '성공' : '실패'}`);
-            log(`✅ 인증 확인: ${results.auth ? '성공' : '실패'}`);
-            log(`✅ 로그인: ${results.login === true ? '성공' : results.login === false ? '실패' : '생략'}`);
-            
-            const allSuccess = results.basic && results.cors && (results.auth || results.login);
-            log(`🎯 전체 결과: ${allSuccess ? '모든 테스트 통과! 연결 정상' : '일부 테스트 실패'}`, allSuccess ? 'success' : 'error');
-            
-            button.disabled = false;
-            button.textContent = '모든 테스트 실행';
         }
 
-        // 페이지 로드 시 환경 정보 표시
-        document.addEventListener('DOMContentLoaded', function() {
-            showEnvironmentInfo();
-            log('API 연결 테스트 페이지 준비 완료');
-            log(`기본 API URL: ${API_URL}`);
-            
-            // URL에서 API URL 파라미터 확인
-            const urlParams = new URLSearchParams(window.location.search);
-            const apiParam = urlParams.get('api');
-            if (apiParam) {
-                document.getElementById('apiUrl').value = apiParam;
-                updateApiUrl();
-            }
-        });
+        // 페이지 로드시 자동 연결 테스트
+        window.onload = function() {
+            testConnection();
+        };
     </script>
 </body>
 </html>
