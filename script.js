@@ -20,14 +20,32 @@ async function apiCall(url, options = {}) {
     
     const finalOptions = { ...defaultOptions, ...options };
     
+    console.log(`🌐 API 호출: ${url}`, {
+        method: finalOptions.method || 'GET',
+        credentials: finalOptions.credentials,
+        headers: finalOptions.headers
+    });
+    
     try {
         const response = await fetch(url, finalOptions);
+        
+        console.log(`📡 응답 수신: ${url}`, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+        });
+        
         if (!response.ok) {
+            const errorData = await response.json().catch(() => ({error: 'Unknown error'}));
+            console.error(`❌ API 오류: ${url}`, errorData);
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        return await response.json();
+        
+        const data = await response.json();
+        console.log(`✅ API 성공: ${url}`, data);
+        return data;
     } catch (error) {
-        console.error(`API 호출 오류 (${url}):`, error);
+        console.error(`💥 API 호출 실패 (${url}):`, error);
         throw error;
     }
 }
@@ -1114,11 +1132,72 @@ function closeModal(modalId) {
 }
 
 // ================================
-// 페이지 초기화
+// 디버깅 함수들 (개발자 콘솔에서 사용 가능)
 // ================================
+
+// 세션 디버깅 함수 - 개발자 콘솔에서 사용
+window.debugSession = async function() {
+    console.log('=== 세션 디버깅 시작 ===');
+    console.log('🍪 현재 쿠키:', document.cookie);
+    
+    try {
+        const authResult = await fetch('/api/auth/check', {
+            credentials: 'include'
+        });
+        const authData = await authResult.json();
+        console.log('🔍 인증 상태:', authData);
+        
+        return authData;
+    } catch (error) {
+        console.error('❌ 세션 확인 실패:', error);
+        return null;
+    }
+};
+
+// 강제 로그인 함수 - 개발자 콘솔에서 사용
+window.forceLogin = async function(password) {
+    console.log('=== 강제 로그인 시도 ===');
+    
+    try {
+        const result = await fetch('/api/auth/login', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ password: password })
+        });
+        
+        const data = await result.json();
+        console.log('🔐 로그인 결과:', data);
+        
+        // 로그인 후 세션 확인
+        const authCheck = await window.debugSession();
+        console.log('✅ 로그인 후 세션:', authCheck);
+        
+        return data;
+    } catch (error) {
+        console.error('❌ 강제 로그인 실패:', error);
+        return null;
+    }
+};
+
+// 쿠키 초기화 함수
+window.clearAllCookies = function() {
+    document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    });
+    console.log('🗑️ 모든 쿠키가 삭제되었습니다.');
+};
+
+console.log('🔧 디버깅 함수 사용법:');
+console.log('  - window.debugSession(): 현재 세션 상태 확인');
+console.log('  - window.forceLogin("비밀번호"): 강제 로그인');
+console.log('  - window.clearAllCookies(): 모든 쿠키 삭제');
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 페이지 초기화 시작');
+    console.log('🍪 페이지 로드시 쿠키 상태:', document.cookie);
     
     // 이벤트 리스너 설정
     setupEventListeners();
@@ -1127,12 +1206,22 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupDownload();
     setupModals();
     
-    // 인증 상태 확인
-    const isAuthenticated = await checkAuth();
-    if (isAuthenticated) {
-        showMainDashboard();
-        await initializeDashboard();
-    } else {
+    // 세션 상태 디버깅
+    try {
+        console.log('🔍 초기 인증 상태 확인 시작...');
+        const authResult = await apiCall('/api/auth/check');
+        console.log('🔍 초기 인증 확인 결과:', authResult);
+        
+        if (authResult.authenticated) {
+            console.log('✅ 이미 로그인된 상태');
+            showMainDashboard();
+            await initializeDashboard();
+        } else {
+            console.log('❌ 로그인되지 않은 상태');
+            showLoginScreen();
+        }
+    } catch (error) {
+        console.error('💥 초기 인증 확인 실패:', error);
         showLoginScreen();
     }
     
