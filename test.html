@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goorm FastAPI 테스트</title>
+    <title>개선된 Goorm FastAPI 테스트</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
         .test { margin: 20px 0; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff; }
@@ -13,18 +13,26 @@
         .warning { background: #fff3cd; color: #856404; border-left-color: #ffc107; }
         button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
         button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
         input[type="password"] { padding: 8px; width: 200px; margin: 5px; }
-        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
         .url-info { background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .cookie-info { background: #f0f8ff; padding: 10px; margin: 10px 0; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <h1>🚀 Goorm FastAPI 연결 테스트</h1>
+    <h1>🚀 개선된 Goorm FastAPI 연결 테스트</h1>
     
     <div class="url-info">
         <h3>🌐 사용 중인 API URL</h3>
         <p><strong>Goorm 포워딩 URL:</strong> <code id="apiUrl">https://feedback3.run.goorm.site</code></p>
         <p><strong>GitHub Pages에서 접근:</strong> <code>https://chad0920kim.github.io/dashboard/</code></p>
+    </div>
+    
+    <div class="cookie-info">
+        <h4>🍪 현재 쿠키 상태</h4>
+        <div id="cookieStatus">쿠키 정보를 확인하는 중...</div>
+        <button onclick="checkCookies()">쿠키 새로고침</button>
     </div>
     
     <div class="test info">
@@ -34,243 +42,301 @@
     </div>
     
     <div class="test info">
-        <h3>🔍 2. 디버그 엔드포인트 테스트</h3>
-        <button onclick="testDebugEndpoint()">세션 디버그 테스트</button>
-        <div id="debugResult"></div>
-    </div>
-    
-    <div class="test info">
-        <h3>🔐 3. 로그인 테스트</h3>
+        <h3>🔐 2. 로그인 테스트 (개선됨)</h3>
         <div>
             <input type="password" id="password" placeholder="비밀번호" value="DefaultPassword">
-            <button onclick="testLogin()">로그인 테스트</button>
+            <button onclick="testLoginImproved()" id="loginBtn">로그인 테스트</button>
         </div>
         <div id="loginResult"></div>
     </div>
     
     <div class="test info">
-        <h3>📊 4. API 데이터 테스트</h3>
-        <button onclick="testAPI()">통계 API 테스트</button>
+        <h3>🔍 3. 인증 상태 직접 확인</h3>
+        <button onclick="checkAuthDirect()">인증 상태 확인</button>
+        <div id="authResult"></div>
+    </div>
+    
+    <div class="test info">
+        <h3>📊 4. API 데이터 테스트 (다중 시도)</h3>
+        <button onclick="testAPIMultiple()" id="apiBtn">통계 API 테스트 (5회 시도)</button>
         <div id="apiResult"></div>
     </div>
     
     <div class="test info">
-        <h3>🌐 5. CORS 테스트</h3>
-        <button onclick="testCORS()">CORS 헤더 확인</button>
+        <h3>🌐 5. CORS 및 쿠키 테스트</h3>
+        <button onclick="testCookieFlow()">전체 쿠키 플로우 테스트</button>
         <div id="corsResult"></div>
     </div>
 
     <script>
-    const API_URL = 'https://feedback3.run.goorm.site';
-    
-    // 전역 로그인 상태 추적
-    let isLoggedIn = false;
-    
-    function log(elementId, message, type = 'info') {
-        const element = document.getElementById(elementId);
-        const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
-        element.innerHTML = `<div class="${className}">${message}</div>`;
-        console.log(`[${type.toUpperCase()}] ${message}`);
-    }
-
-    async function testLogin() {
-        const password = document.getElementById('password').value;
-        log('loginResult', '🔄 로그인 테스트 중...', 'info');
+        const API_URL = 'https://feedback3.run.goorm.site';
+        let loginSuccess = false;
         
-        try {
-            const response = await fetch(`${API_URL}/api/auth/login`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ password: password })
-            });
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+            element.innerHTML = `<div class="${className}">${message}</div>`;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function checkCookies() {
+            const cookies = document.cookie;
+            const authStatus = getCookie('auth_status');
+            const tourvisSession = getCookie('tourvis_session');
             
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    isLoggedIn = true;
-                    log('loginResult', `✅ 로그인 성공!<br>메시지: ${data.message}<br>🔄 인증 상태 확인 중...`, 'success');
-                    
-                    // 로그인 후 잠시 기다렸다가 인증 상태 확인
-                    setTimeout(async () => {
-                        await checkAuthStatus();
-                    }, 1000);
+            let cookieInfo = `
+                <strong>전체 쿠키:</strong> ${cookies || '없음'}<br>
+                <strong>auth_status:</strong> ${authStatus || '없음'}<br>
+                <strong>tourvis_session:</strong> ${tourvisSession || '없음'}
+            `;
+            
+            document.getElementById('cookieStatus').innerHTML = cookieInfo;
+            console.log('🍪 쿠키 상태:', { cookies, authStatus, tourvisSession });
+        }
+
+        async function testBasicConnection() {
+            log('basicResult', '🔄 서버 연결 테스트 중...', 'info');
+            
+            try {
+                const response = await fetch(API_URL);
+                
+                if (response.ok) {
+                    const data = await response.text();
+                    log('basicResult', `✅ 서버 연결 성공!<br>응답: ${data.substring(0, 200)}...`, 'success');
                 } else {
-                    isLoggedIn = false;
-                    log('loginResult', `❌ 로그인 실패: ${data.message}`, 'error');
+                    log('basicResult', `⚠️ 서버 응답: ${response.status} ${response.statusText}`, 'warning');
                 }
-            } else {
-                isLoggedIn = false;
-                const errorData = await response.json();
-                log('loginResult', `❌ 로그인 실패: ${response.status}<br>${JSON.stringify(errorData)}`, 'error');
+            } catch (error) {
+                log('basicResult', `❌ 연결 실패: ${error.message}`, 'error');
             }
-        } catch (error) {
-            isLoggedIn = false;
-            log('loginResult', `❌ 로그인 오류: ${error.message}`, 'error');
         }
-    }
 
-    // 인증 상태 확인 함수 추가
-    async function checkAuthStatus() {
-        try {
-            const response = await fetch(`${API_URL}/api/auth/check`, {
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            });
+        async function testLoginImproved() {
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
             
-            if (response.ok) {
-                const data = await response.json();
-                if (data.authenticated) {
-                    log('loginResult', `✅ 로그인 성공! 인증 상태 확인됨<br>세션: ${JSON.stringify(data.session_data)}<br>쿠키: ${JSON.stringify(data.cookies)}`, 'success');
+            loginBtn.disabled = true;
+            loginBtn.textContent = '로그인 중...';
+            
+            log('loginResult', '🔄 개선된 로그인 테스트 중...', 'info');
+            
+            try {
+                // 로그인 전 쿠키 상태 확인
+                console.log('🍪 로그인 전 쿠키:', document.cookie);
+                
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: JSON.stringify({ password: password })
+                });
+                
+                // 응답 헤더 확인
+                console.log('📡 응답 헤더:', [...response.headers.entries()]);
+                console.log('🍪 Set-Cookie 헤더:', response.headers.get('Set-Cookie'));
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        loginSuccess = true;
+                        
+                        log('loginResult', `✅ 로그인 성공!<br>메시지: ${data.message}<br>🔄 쿠키 확인 중...`, 'success');
+                        
+                        // 쿠키가 설정될 시간을 기다림
+                        setTimeout(() => {
+                            checkCookies();
+                            
+                            // 5초 후 인증 상태 자동 확인
+                            setTimeout(() => {
+                                checkAuthDirect();
+                            }, 2000);
+                            
+                        }, 1000);
+                        
+                    } else {
+                        log('loginResult', `❌ 로그인 실패: ${data.message}`, 'error');
+                        loginSuccess = false;
+                    }
                 } else {
-                    log('loginResult', `⚠️ 로그인했지만 인증 상태가 False입니다.<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'warning');
+                    const errorData = await response.json();
+                    log('loginResult', `❌ 로그인 실패: ${response.status}<br>${JSON.stringify(errorData)}`, 'error');
+                    loginSuccess = false;
                 }
+            } catch (error) {
+                log('loginResult', `❌ 로그인 오류: ${error.message}`, 'error');
+                loginSuccess = false;
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '로그인 테스트';
             }
-        } catch (error) {
-            log('loginResult', `❌ 인증 상태 확인 오류: ${error.message}`, 'error');
         }
-    }
 
-    async function testAPI() {
-        log('apiResult', '🔄 API 테스트 중...', 'info');
-        
-        // 로그인 상태 체크
-        if (!isLoggedIn) {
-            log('apiResult', '⚠️ 먼저 로그인을 해주세요!', 'warning');
-            return;
-        }
-        
-        try {
-            // API 호출 전에 한 번 더 인증 상태 확인
-            const authCheck = await fetch(`${API_URL}/api/auth/check`, {
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            });
+        async function checkAuthDirect() {
+            log('authResult', '🔄 인증 상태 직접 확인 중...', 'info');
             
-            const authData = await authCheck.json();
-            if (!authData.authenticated) {
-                log('apiResult', `❌ 인증이 만료되었습니다. 다시 로그인해주세요.<br><pre>${JSON.stringify(authData, null, 2)}</pre>`, 'error');
-                isLoggedIn = false;
+            try {
+                // 현재 쿠키 상태 확인
+                const currentCookies = document.cookie;
+                console.log('🍪 요청 전 쿠키:', currentCookies);
+                
+                const response = await fetch(`${API_URL}/api/auth/check`, {
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.authenticated) {
+                        log('authResult', `✅ 인증 상태: 성공!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                        loginSuccess = true;
+                    } else {
+                        log('authResult', `⚠️ 인증 상태: 실패<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'warning');
+                        loginSuccess = false;
+                    }
+                } else {
+                    log('authResult', `❌ 인증 확인 실패: ${response.status}`, 'error');
+                    loginSuccess = false;
+                }
+            } catch (error) {
+                log('authResult', `❌ 인증 확인 오류: ${error.message}`, 'error');
+                loginSuccess = false;
+            }
+        }
+
+        async function testAPIMultiple() {
+            const apiBtn = document.getElementById('apiBtn');
+            apiBtn.disabled = true;
+            apiBtn.textContent = 'API 테스트 중...';
+            
+            log('apiResult', '🔄 다중 API 테스트 시작...', 'info');
+            
+            if (!loginSuccess) {
+                log('apiResult', '⚠️ 먼저 로그인 성공이 필요합니다!', 'warning');
+                apiBtn.disabled = false;
+                apiBtn.textContent = '통계 API 테스트 (5회 시도)';
                 return;
             }
             
-            log('apiResult', '✅ 인증 확인됨, API 호출 중...', 'info');
-            
             const today = new Date().toISOString().split('T')[0];
-            const response = await fetch(`${API_URL}/api/dashboard/statistics`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    mode: 'day',
-                    start_date: today,
-                    match_filter: '전체',
-                    email_filter: '전체',
-                    reflection_filter: '전체',
-                    chat_session_filter: ''
-                })
-            });
+            const requestBody = {
+                mode: 'day',
+                start_date: today,
+                match_filter: '전체',
+                email_filter: '전체',
+                reflection_filter: '전체',
+                chat_session_filter: ''
+            };
             
-            if (response.ok) {
-                const data = await response.json();
-                log('apiResult', `✅ API 호출 성공!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
-            } else {
-                const errorData = await response.json();
-                log('apiResult', `❌ API 실패: ${response.status}<br><pre>${JSON.stringify(errorData, null, 2)}</pre>`, 'error');
-            }
-        } catch (error) {
-            log('apiResult', `❌ API 오류: ${error.message}`, 'error');
-        }
-    }
-
-    // 나머지 함수들은 그대로...
-    async function testBasicConnection() {
-        log('basicResult', '🔄 서버 연결 테스트 중...', 'info');
-        
-        try {
-            const response = await fetch(API_URL);
-            
-            if (response.ok) {
-                const data = await response.text();
-                log('basicResult', `✅ 서버 연결 성공!<br>응답: ${data.substring(0, 200)}...`, 'success');
-            } else {
-                log('basicResult', `⚠️ 서버 응답: ${response.status} ${response.statusText}`, 'warning');
-            }
-        } catch (error) {
-            log('basicResult', `❌ 연결 실패: ${error.message}`, 'error');
-        }
-    }
-
-    async function testDebugEndpoint() {
-        log('debugResult', '🔄 디버그 엔드포인트 테스트 중...', 'info');
-        
-        try {
-            const response = await fetch(`${API_URL}/api/debug/session`, {
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                log('debugResult', `✅ 디버그 성공!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
-            } else {
-                log('debugResult', `❌ 디버그 실패: ${response.status}`, 'error');
-            }
-        } catch (error) {
-            log('debugResult', `❌ 디버그 오류: ${error.message}`, 'error');
-        }
-    }
-
-    async function testCORS() {
-        log('corsResult', '🔄 CORS 테스트 중...', 'info');
-        
-        try {
-            const response = await fetch(`${API_URL}/api/debug/session`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Origin': window.location.origin
-                }
-            });
-            
-            if (response.ok) {
-                const corsHeaders = {
-                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
-                    'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials'),
-                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
-                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
-                };
+            // 5회 시도
+            for (let attempt = 1; attempt <= 5; attempt++) {
+                log('apiResult', `🔄 API 테스트 시도 ${attempt}/5...`, 'info');
                 
-                log('corsResult', `✅ CORS 헤더 확인!<br><pre>${JSON.stringify(corsHeaders, null, 2)}</pre>`, 'success');
-            } else {
-                log('corsResult', `⚠️ CORS 응답: ${response.status}`, 'warning');
+                try {
+                    // 각 시도마다 쿠키 상태 확인
+                    console.log(`🍪 시도 ${attempt} - 쿠키:`, document.cookie);
+                    
+                    const response = await fetch(`${API_URL}/api/dashboard/statistics`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        log('apiResult', `✅ API 성공! (시도 ${attempt})<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                        break;
+                    } else {
+                        const errorData = await response.json();
+                        log('apiResult', `❌ API 실패 (시도 ${attempt}): ${response.status}<br><pre>${JSON.stringify(errorData, null, 2)}</pre>`, 'error');
+                        
+                        if (attempt < 5) {
+                            // 실패하면 2초 대기 후 재시도
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+                    }
+                } catch (error) {
+                    log('apiResult', `❌ API 오류 (시도 ${attempt}): ${error.message}`, 'error');
+                    if (attempt < 5) {
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
             }
-        } catch (error) {
-            log('corsResult', `❌ CORS 오류: ${error.message}`, 'error');
+            
+            apiBtn.disabled = false;
+            apiBtn.textContent = '통계 API 테스트 (5회 시도)';
         }
-    }
 
-    window.onload = function() {
-        console.log('🚀 Goorm FastAPI 테스트 시작');
-        console.log('📍 API URL:', API_URL);
-        testBasicConnection();
-    };
-</script>
+        async function testCookieFlow() {
+            log('corsResult', '🔄 전체 쿠키 플로우 테스트...', 'info');
+            
+            try {
+                // 1단계: 디버그 엔드포인트로 현재 상태 확인
+                const debugResponse = await fetch(`${API_URL}/api/debug/session`, {
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (debugResponse.ok) {
+                    const debugData = await debugResponse.json();
+                    
+                    let result = `✅ 디버그 정보 확인:<br><pre>${JSON.stringify(debugData, null, 2)}</pre>`;
+                    
+                    // 2단계: CORS 헤더 확인
+                    const corsHeaders = {
+                        'Access-Control-Allow-Origin': debugResponse.headers.get('Access-Control-Allow-Origin'),
+                        'Access-Control-Allow-Credentials': debugResponse.headers.get('Access-Control-Allow-Credentials'),
+                        'Set-Cookie': debugResponse.headers.get('Set-Cookie')
+                    };
+                    
+                    result += `<br><br>🌐 CORS 헤더:<br><pre>${JSON.stringify(corsHeaders, null, 2)}</pre>`;
+                    
+                    // 3단계: 브라우저 쿠키 상태
+                    result += `<br><br>🍪 브라우저 쿠키: <code>${document.cookie || '없음'}</code>`;
+                    
+                    log('corsResult', result, 'success');
+                } else {
+                    log('corsResult', `❌ 디버그 실패: ${debugResponse.status}`, 'error');
+                }
+            } catch (error) {
+                log('corsResult', `❌ 쿠키 플로우 테스트 오류: ${error.message}`, 'error');
+            }
+        }
+
+        // 페이지 로드 시 실행
+        window.onload = function() {
+            console.log('🚀 개선된 Goorm FastAPI 테스트 시작');
+            console.log('📍 API URL:', API_URL);
+            checkCookies();
+            testBasicConnection();
+        };
+
+        // 쿠키 변화 모니터링
+        setInterval(() => {
+            checkCookies();
+        }, 5000);
+    </script>
 </body>
 </html>
