@@ -5,11 +5,34 @@
 let currentQAList = [];
 let currentSearchParams = {};
 
+// API 베이스 URL 자동 감지
+const API_BASE_URL = (() => {
+    const hostname = window.location.hostname;
+    
+    // GitHub Pages에서 실행중인 경우
+    if (hostname.includes('github.io')) {
+        return 'http://localhost:8502';  // 로컬 Flask 서버로 연결
+    }
+    
+    // 로컬에서 실행중인 경우
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return '';  // 상대 경로 사용
+    }
+    
+    // 기타의 경우
+    return '';
+})();
+
+console.log(`🌐 API 베이스 URL: ${API_BASE_URL || '상대 경로'}`);
+
 // ================================
 // 공통 API 호출 함수
 // ================================
 
 async function apiCall(url, options = {}) {
+    // API URL 구성
+    const fullUrl = API_BASE_URL + url;
+    
     const defaultOptions = {
         credentials: 'include', // 세션 쿠키 포함 (필수!)
         headers: {
@@ -20,16 +43,16 @@ async function apiCall(url, options = {}) {
     
     const finalOptions = { ...defaultOptions, ...options };
     
-    console.log(`🌐 API 호출: ${url}`, {
+    console.log(`🌐 API 호출: ${fullUrl}`, {
         method: finalOptions.method || 'GET',
         credentials: finalOptions.credentials,
         headers: finalOptions.headers
     });
     
     try {
-        const response = await fetch(url, finalOptions);
+        const response = await fetch(fullUrl, finalOptions);
         
-        console.log(`📡 응답 수신: ${url}`, {
+        console.log(`📡 응답 수신: ${fullUrl}`, {
             status: response.status,
             statusText: response.statusText,
             headers: Object.fromEntries(response.headers.entries())
@@ -37,15 +60,21 @@ async function apiCall(url, options = {}) {
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({error: 'Unknown error'}));
-            console.error(`❌ API 오류: ${url}`, errorData);
+            console.error(`❌ API 오류: ${fullUrl}`, errorData);
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
-        console.log(`✅ API 성공: ${url}`, data);
+        console.log(`✅ API 성공: ${fullUrl}`, data);
         return data;
     } catch (error) {
-        console.error(`💥 API 호출 실패 (${url}):`, error);
+        console.error(`💥 API 호출 실패 (${fullUrl}):`, error);
+        
+        // GitHub Pages에서 로컬 서버 접속 실패시 안내
+        if (API_BASE_URL.includes('localhost') && window.location.hostname.includes('github.io')) {
+            showToast('로컬 Flask 서버(localhost:8502)가 실행되고 있는지 확인해주세요.', 'error');
+        }
+        
         throw error;
     }
 }
