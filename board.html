@@ -21,16 +21,19 @@
                 </p>
             </div>
             
+<!-- 기존 HTML에서 로그인 부분만 수정 -->
             <div class="login-form">
-                <div class="form-group">
-                    <label for="password">비밀번호를 입력하세요</label>
-                    <input type="password" id="password" placeholder="패스워드 입력" />
-                    <small class="help-text">패스워드 문의: 김영훈</small>
-                </div>
-                
-                <button id="loginBtn" type="button" class="btn btn-primary">
-                    <i class="fas fa-key"></i> 로그인
-                </button>
+                <form id="loginForm" onsubmit="return false;">
+                    <div class="form-group">
+                        <label for="password">비밀번호를 입력하세요</label>
+                        <input type="password" id="password" name="password" placeholder="패스워드 입력" autocomplete="current-password" />
+                        <small class="help-text">패스워드 문의: 김영훈</small>
+                    </div>
+                    
+                    <button id="loginBtn" type="submit" class="btn btn-primary">
+                        <i class="fas fa-key"></i> 로그인
+                    </button>
+                </form>
                 
                 <div id="loginError" class="error-message" style="display: none;"></div>
             </div>
