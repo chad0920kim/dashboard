@@ -9,22 +9,21 @@ let isRetrying = false;
 // API 베이스 URL 설정 - 단순화
 const API_BASE_URL = (() => {
     const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
     
-    console.log('🌐 현재 환경:', { hostname, protocol });
+    console.log('🌐 현재 환경:', { hostname });
     
     // GitHub Pages에서 실행중인 경우
     if (hostname.includes('github.io')) {
-        return 'http://localhost:8502';  // 로컬 API 서버
+        return 'https://feedback3.run.goorm.site';  // 🔥 Goorm URL로 수정!
     }
     
     // 로컬에서 실행중인 경우
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return '';  // 상대 경로 사용
+        return 'https://feedback3.run.goorm.site';  // 🔥 Goorm URL로 수정!
     }
     
-    // 기본값
-    return '';
+    // 기본값도 Goorm URL로 설정
+    return 'https://feedback3.run.goorm.site';
 })();
 
 console.log(`🌐 API 베이스 URL: ${API_BASE_URL || '상대 경로'}`);
