@@ -3,114 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>빠른 연결 테스트</title>
+    <title>Goorm FastAPI 테스트</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
-        .test { margin: 20px 0; padding: 15px; border-radius: 5px; }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-        .info { background: #d1ecf1; color: #0c5460; }
-        button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; }
-        input[type="password"] { padding: 8px; width: 200px; }
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
+        .test { margin: 20px 0; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff; }
+        .success { background: #d4edda; color: #155724; border-left-color: #28a745; }
+        .error { background: #f8d7da; color: #721c24; border-left-color: #dc3545; }
+        .info { background: #d1ecf1; color: #0c5460; border-left-color: #17a2b8; }
+        .warning { background: #fff3cd; color: #856404; border-left-color: #ffc107; }
+        button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        input[type="password"] { padding: 8px; width: 200px; margin: 5px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .url-info { background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 10px 0; }
     </style>
 </head>
 <body>
-    <h1>🚀 FastAPI 연결 테스트</h1>
+    <h1>🚀 Goorm FastAPI 연결 테스트</h1>
     
-    <div id="status" class="test info">
-        <h3>📡 서버 연결 상태</h3>
-        <button onclick="testConnection()">연결 테스트</button>
-        <div id="connectionResult"></div>
+    <div class="url-info">
+        <h3>🌐 사용 중인 API URL</h3>
+        <p><strong>Goorm 포워딩 URL:</strong> <code id="apiUrl">https://feedback3.run.goorm.site</code></p>
+        <p><strong>GitHub Pages에서 접근:</strong> <code>https://chad0920kim.github.io/dashboard/</code></p>
     </div>
     
     <div class="test info">
-        <h3>🔐 로그인 테스트</h3>
-        <input type="password" id="password" placeholder="비밀번호" value="DefaultPassword">
-        <button onclick="testLogin()">로그인 테스트</button>
+        <h3>📡 1. 기본 연결 테스트</h3>
+        <button onclick="testBasicConnection()">서버 연결 확인</button>
+        <div id="basicResult"></div>
+    </div>
+    
+    <div class="test info">
+        <h3>🔍 2. 디버그 엔드포인트 테스트</h3>
+        <button onclick="testDebugEndpoint()">세션 디버그 테스트</button>
+        <div id="debugResult"></div>
+    </div>
+    
+    <div class="test info">
+        <h3>🔐 3. 로그인 테스트</h3>
+        <div>
+            <input type="password" id="password" placeholder="비밀번호" value="DefaultPassword">
+            <button onclick="testLogin()">로그인 테스트</button>
+        </div>
         <div id="loginResult"></div>
     </div>
     
     <div class="test info">
-        <h3>📊 API 테스트</h3>
-        <button onclick="testAPI()">데이터 조회 테스트</button>
+        <h3>📊 4. API 데이터 테스트</h3>
+        <button onclick="testAPI()">통계 API 테스트</button>
         <div id="apiResult"></div>
+    </div>
+    
+    <div class="test info">
+        <h3>🌐 5. CORS 테스트</h3>
+        <button onclick="testCORS()">CORS 헤더 확인</button>
+        <div id="corsResult"></div>
     </div>
 
     <script>
-        const API_URL = 'http://localhost:8502';
+        const API_URL = 'https://feedback3.run.goorm.site';
+        
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+            element.innerHTML = `<div class="${className}">${message}</div>`;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
 
-        async function testConnection() {
-            const resultDiv = document.getElementById('connectionResult');
-            resultDiv.innerHTML = '테스트 중...';
+        async function testBasicConnection() {
+            log('basicResult', '🔄 서버 연결 테스트 중...', 'info');
+            
+            try {
+                const response = await fetch(API_URL);
+                
+                if (response.ok) {
+                    const data = await response.text();
+                    log('basicResult', `✅ 서버 연결 성공!<br>응답: ${data.substring(0, 200)}...`, 'success');
+                } else {
+                    log('basicResult', `⚠️ 서버 응답: ${response.status} ${response.statusText}`, 'warning');
+                }
+            } catch (error) {
+                log('basicResult', `❌ 연결 실패: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDebugEndpoint() {
+            log('debugResult', '🔄 디버그 엔드포인트 테스트 중...', 'info');
             
             try {
                 const response = await fetch(`${API_URL}/api/debug/session`, {
-                    credentials: 'include'
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
                 });
                 
                 if (response.ok) {
                     const data = await response.json();
-                    resultDiv.innerHTML = `
-                        <div class="success">
-                            ✅ 서버 연결 성공!<br>
-                            세션 데이터: ${JSON.stringify(data.session_data)}<br>
-                            쿠키: ${JSON.stringify(data.cookies)}
-                        </div>
-                    `;
+                    log('debugResult', `✅ 디버그 성공!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
                 } else {
-                    resultDiv.innerHTML = `<div class="error">❌ 연결 실패: ${response.status}</div>`;
+                    log('debugResult', `❌ 디버그 실패: ${response.status}`, 'error');
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+                log('debugResult', `❌ 디버그 오류: ${error.message}`, 'error');
             }
         }
 
         async function testLogin() {
             const password = document.getElementById('password').value;
-            const resultDiv = document.getElementById('loginResult');
-            resultDiv.innerHTML = '로그인 시도 중...';
+            log('loginResult', '🔄 로그인 테스트 중...', 'info');
             
             try {
                 const response = await fetch(`${API_URL}/api/auth/login`, {
                     method: 'POST',
                     credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify({ password: password })
                 });
                 
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    resultDiv.innerHTML = `
-                        <div class="success">
-                            ✅ 로그인 성공!<br>
-                            메시지: ${data.message}
-                        </div>
-                    `;
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        log('loginResult', `✅ 로그인 성공!<br>메시지: ${data.message}`, 'success');
+                    } else {
+                        log('loginResult', `❌ 로그인 실패: ${data.message}`, 'error');
+                    }
                 } else {
-                    resultDiv.innerHTML = `
-                        <div class="error">
-                            ❌ 로그인 실패<br>
-                            ${data.detail || data.message}
-                        </div>
-                    `;
+                    const errorData = await response.json();
+                    log('loginResult', `❌ 로그인 실패: ${response.status}<br>${JSON.stringify(errorData)}`, 'error');
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+                log('loginResult', `❌ 로그인 오류: ${error.message}`, 'error');
             }
         }
 
         async function testAPI() {
-            const resultDiv = document.getElementById('apiResult');
-            resultDiv.innerHTML = '데이터 조회 중...';
+            log('apiResult', '🔄 API 테스트 중...', 'info');
             
             try {
-                // 오늘 날짜로 통계 요청
                 const today = new Date().toISOString().split('T')[0];
                 const response = await fetch(`${API_URL}/api/dashboard/statistics`, {
                     method: 'POST',
                     credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify({
                         mode: 'day',
                         start_date: today,
@@ -123,29 +165,51 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    resultDiv.innerHTML = `
-                        <div class="success">
-                            ✅ API 호출 성공!<br>
-                            통계 데이터: ${JSON.stringify(data, null, 2)}
-                        </div>
-                    `;
+                    log('apiResult', `✅ API 호출 성공!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
                 } else {
-                    const error = await response.json();
-                    resultDiv.innerHTML = `
-                        <div class="error">
-                            ❌ API 호출 실패: ${response.status}<br>
-                            ${JSON.stringify(error, null, 2)}
-                        </div>
-                    `;
+                    const errorData = await response.json();
+                    log('apiResult', `❌ API 실패: ${response.status}<br><pre>${JSON.stringify(errorData, null, 2)}</pre>`, 'error');
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+                log('apiResult', `❌ API 오류: ${error.message}`, 'error');
             }
         }
 
-        // 페이지 로드시 자동 연결 테스트
+        async function testCORS() {
+            log('corsResult', '🔄 CORS 테스트 중...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/debug/session`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    }
+                });
+                
+                if (response.ok) {
+                    const corsHeaders = {
+                        'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                        'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials'),
+                        'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                        'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+                    };
+                    
+                    log('corsResult', `✅ CORS 헤더 확인!<br><pre>${JSON.stringify(corsHeaders, null, 2)}</pre>`, 'success');
+                } else {
+                    log('corsResult', `⚠️ CORS 응답: ${response.status}`, 'warning');
+                }
+            } catch (error) {
+                log('corsResult', `❌ CORS 오류: ${error.message}`, 'error');
+            }
+        }
+
+        // 페이지 로드 시 자동으로 기본 연결 테스트
         window.onload = function() {
-            testConnection();
+            console.log('🚀 Goorm FastAPI 테스트 시작');
+            console.log('📍 API URL:', API_URL);
+            testBasicConnection();
         };
     </script>
 </body>
